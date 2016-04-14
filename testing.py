@@ -1,7 +1,9 @@
 from pymongo import MongoClient
-import matplotlib as plt
+import matplotlib.pyplot as plt
 import numpy as np
 from sklearn import linear_model
+from mpl_toolkits.mplot3d import Axes3D
+
 client=MongoClient()
 db=client.zipwatch
 
@@ -66,6 +68,39 @@ print("10013")
 print(regr.coef_)
 print(regr.intercept_)
 
+def plot_figs(fig_num, elev, azim, x, clf):
+    fig = plt.figure(fig_num, figsize=(4, 3))
+    plt.clf()
+    ax = Axes3D(fig, elev=elev, azim=azim)
+
+    ax.scatter(x[:, 0], x[:, 1], yvaltrain, c='k', marker='+')
+    ax.plot_surface(np.array([[-.1, -.1], [.15, .15]]),
+                    np.array([[-.1, .15], [-.1, .15]]),
+                    clf.predict(np.array([[-.1, -.1, .15, .15],
+                                          [-.1, .15, -.1, .15]]).T
+                                ).reshape((2, 2)),
+                    alpha=.5)
+    ax.set_xlabel('X_1')
+    ax.set_ylabel('X_2')
+    ax.set_zlabel('Y')
+    ax.w_xaxis.set_ticklabels([])
+    ax.w_yaxis.set_ticklabels([])
+    ax.w_zaxis.set_ticklabels([])
+
+#Generate the three different figures from different views
+elev = 43.5
+azim = -110
+plot_figs(1, elev, azim, x, regr)
+
+elev = -.5
+azim = 0
+plot_figs(2, elev, azim,x, regr)
+
+elev = -.5
+azim = 90
+plot_figs(3, elev, azim, x, regr)
+
+plt.show()
 
 
 
