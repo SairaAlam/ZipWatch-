@@ -1,55 +1,80 @@
 from pymongo import MongoClient
 import matplotlib as plt
 import numpy as np
+import pandas as pd
 from sklearn import linear_model
 client=MongoClient()
 db=client.zipwatch
 
-ziparray = [10013, 10004, 10006, 10282, 10038,10002, 10003, 10009, 10011,
-            10010, 10001, 10016, 10022, 10019, 10036, 10021, 10065,10128,
-            None, 10023, 10024, 10029, 10025, 10035, 10027, 10026, 10031, 10030,10039,
-            10032, 10033, 10034, 10040, 10454, 10455, 10459, 10474, 10451, 10462, 10472, 10473, 10456,
-             10453, 10468, 10466,10475, 10457, 10460, 10469, 10461, 10463, 10467,
-            10458, 11224, 11229, 11235, 11214, 11210, 11204, 11219, 11203, 11226, 11209,
-            11220,  11236, 11230, 11225, 11212, 11233, 11208, 11207, 11239, 11231, 11213, 11217,
-            11215, 11216, 11221, 11237, 11201, 11205, 11238, 11211, 11206, 11222, 11694, 11695,
-           11691, 11418, 11416,11423, 11432, 11451, 11385, 11426, 11427, 11411, 11413,
-             11417, 11365, 11366, 11367, 11101, 11354, 11355,11359, 11360, 11368,
-            11373,  11364, 11361,  11375, 11412, 11434, 11436, 11103,
-             11106, 10301,  10302, 10314, 10306,
-            10304, 10312]
-
-cursor=db.total_crime.find({"zipcode":10022}).distinct("tc")
-cursor1=db.total_crime.find({"zipcode":10022}).distinct("year")
-cursor2=db.total_crime.find({"zipcode":10022}).distinct("gradrate")
-yvalList=[]
-xvalList=[]
-xvalList1=[]
-finalxList=[]
-
-for document in cursor:
-    yvalList.append(document)
-
-for document1 in cursor1:
-    xvalList.append(document1)
+zipcodelist=[10012,10007,10280,10005,10014,10018,10017,10020,10028,10075,10162,10069,10037,10033,10034,10474,10452,10464,
+             10465,10453,10470,10471,11223,11234,11218,11228,11232,11692,11693,11695,11697,11690,11415,11421,11419,11424,11423,11435,11405,11431,11433,11439,11499,11379,11381,11428
+                ,11429,11422,11005,11001,11002,11004,11414,11420,11425,11104,11377,11378,11109,11356,11357,11358,11359,11360,11351,11352,11386,11390,11380,11362,11363,11374,11430,11102
+                ,11105,10044,11369,11370,11372,11371,10310,10308,10305,10307,10309]
 
 
-for document2 in cursor2:
-    xvalList1.append(document2)
 
-xvalarray=np.asarray(xvalList)
-y=np.asarray(yvalList)
-xval1array=np.asarray(xvalList1)
 
-ones=np.ones(xvalarray.shape)
-x=np.array([xvalarray,xval1array]).T
 
-regr=linear_model.LinearRegression()
-regr.fit(x,y)
 
-print("10022")
-print(regr.coef_)
-print(regr.intercept_)
+
+for index in zipcodelist:
+    cursor1=db.total_crime.find({"zipcode":index}).distinct("year")
+
+    cursor=db.total_crime.find({"zipcode":index}).distinct("tc")
+
+    xvalList=[]
+    yvalList=[]
+
+    for document1 in cursor1:
+        xvalList.append(document1)
+
+    for document2 in cursor:
+        yvalList.append(document2)
+
+
+    xvalarray=np.asarray(xvalList).astype(np.float)
+    yvalarray=np.asarray(yvalList).astype(np.float)
+
+
+    ones=np.ones(xvalarray.shape)
+    x=np.array([xvalarray]).T
+
+    regr=linear_model.LinearRegression()
+    regr.fit(x,yvalarray)
+
+    currGradRate=regr.predict(2016)
+    predGradRate=regr.predict(2020)
+
+
+
+
+    a=regr.coef_
+    CurrTotalCrime=(a[0]*2016)+regr.intercept_
+    PredTotalCrime=(a[0]*2020)+regr.intercept_
+    cur=[]
+    cur.append(float(CurrTotalCrime))
+    pred=[]
+    pred.append(float(PredTotalCrime))
+    db.majorcrimeCurr.insert({"zipcode": index, "current": cur})
+    db.majorcrimePred.insert({"zipcode": index, "predict": pred})
+
+    print(index)
+    print("Current " , CurrTotalCrime)
+    print("Prediction ", PredTotalCrime)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
