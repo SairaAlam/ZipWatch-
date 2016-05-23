@@ -22,8 +22,14 @@ for index in zipcodelist:
 
     cursor=db.minor_crime.find({"zipcode":index}).distinct("tc")
 
+    cursor2=db.minor_crime.find({"zipcode":index}).distinct("pop")
+    cursor4 = db.major_crime.find({"zipcode": index}).distinct("income")
+
+
     xvalList=[]
     yvalList=[]
+    zvalList=[]
+    wvalList=[]
 
     for document1 in cursor1:
         xvalList.append(document1)
@@ -31,9 +37,17 @@ for index in zipcodelist:
     for document2 in cursor:
         yvalList.append(document2)
 
+    for document3 in cursor:
+        zvalList.append(document3)
+
+    for document4 in cursor:
+        wvalList.append(document4)
+
 
     xvalarray=np.asarray(xvalList).astype(np.float)
     yvalarray=np.asarray(yvalList).astype(np.float)
+    zvalarray=np.asarray(zvalList).astype(np.float)
+    wvalarray=np.asarray(wvalList).astype(np.float)
 
 
     ones=np.ones(xvalarray.shape)
@@ -45,12 +59,34 @@ for index in zipcodelist:
     currGradRate=regr.predict(2016)
     predGradRate=regr.predict(2020)
 
+    ones = np.ones(xvalarray.shape)
+    x = np.array([xvalarray]).T
+
+    regr = linear_model.LinearRegression()
+    regr.fit(x, zvalarray)
 
 
+    currPopRate=regr.predict(2016)
+    predPopRate=regr.predict(2020)
+
+    ones = np.ones(xvalarray.shape)
+    x = np.array([xvalarray]).T
+
+    regr = linear_model.LinearRegression()
+    regr.fit(x, wvalarray)
+
+    currIncRate = regr.predict(2016)
+    predIncRate = regr.predict(2020)
+
+    ones=np.ones(xvalarray.shape)
+    x=np.array([xvalarray,zvalarray,wvalarray]).T
+
+    regr=linear_model.LinearRegression()
+    regr.fit(x,yvalarray)
 
     a=regr.coef_
-    CurrTotalCrime=(a[0]*2016)+regr.intercept_
-    PredTotalCrime=(a[0]*2020)+regr.intercept_
+    CurrTotalCrime=(a[0]*2016)+(a[1]*currPopRate)+(a[2]*currIncRate)+regr.intercept_
+    PredTotalCrime=(a[0]*2020)+(a[1]*predPopRate)+(a[2]*predIncRate)+regr.intercept_
     cur=[]
     cur.append(float(CurrTotalCrime))
     pred=[]
